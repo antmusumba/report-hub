@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Community Feedback & Reporting</h1>
+
+    <h2>Submit a Report</h2>
+    <form id="reportForm">
+        <input type="text" id="title" placeholder="Report Title" required><br>
+        <textarea id="description" placeholder="Description of the issue" required></textarea><br>
+        <input type="text" id="location" placeholder="Location" required><br>
+        <select id="category" required>
+            <option value="">Select Category</option>
+            <option value="Streetlight">Streetlight</option>
+            <option value="Pothole">Pothole</option>
+            <option value="Water Issue">Water Issue</option>
+            <option value="Noise">Noise</option>
+        </select><br>
+        <button type="submit">Submit Report</button>
+    </form>
+
+    <h2>Filter Reports</h2>
+    <form id="filterForm">
+        <input type="text" id="filterLocation" placeholder="Location">
+        <input type="text" id="filterKeyword" placeholder="Keyword">
+        <select id="filterCategory">
+            <option value="">Select Category</option>
+            <option value="Streetlight">Streetlight</option>
+            <option value="Pothole">Pothole</option>
+            <option value="Water Issue">Water Issue</option>
+            <option value="Noise">Noise</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    <h2>Reports</h2>
+    <div id="reportsList"></div>
+
+    <script>
+        // Handle submitting new report
+        document.getElementById("reportForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+            const location = document.getElementById("location").value;
+            const category = document.getElementById("category").value;
+
+            fetch('/report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, description, location, category }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Report submitted successfully!");
+                fetchReports();  // Refresh the list of reports
+            })
+            .catch(err => console.error("Error submitting report:", err));
+        });
+
+        // Handle filtering reports
+        document.getElementById("filterForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const location = document.getElementById("filterLocation").value;
+            const keyword = document.getElementById("filterKeyword").value;
+            const category = document.getElementById("filterCategory").value;
+
+            fetch(`/reports?location=${location}&keyword=${keyword}&category=${category}`)
+            .then(response => response.json())
+            .then(data => displayReports(data))
+            .catch(err => console.error("Error fetching reports:", err));
+        });
+
+        // Fetch all reports and display
+        function fetchReports() {
+            fetch('/reports')
+            .then(response => response.json())
+            .then(data => displayReports(data))
+            .catch(err => console.error("Error fetching reports:", err));
+        }
+
+        // Display reports
+        function displayReports(reports) {
+            const reportsList = document.getElementById("reportsList");
+            reportsList.innerHTML = "";
+            reports.forEach(report => {
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <strong>${report.title}</strong><br>
+                    Category: ${report.category} | Location: ${report.location}<br>
+                    ${report.description}<br>
+                    <small>Submitted at ${new Date(report.timestamp).toLocaleString()}</small><br><hr>
+                `;
+                reportsList.appendChild(div);
+            });
+        }
+
+        // Initial load of reports
+        fetchReports();
+    </script>
+</body>
+</html>
